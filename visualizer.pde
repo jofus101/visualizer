@@ -22,7 +22,9 @@ import ddf.minim.analysis.*;
 Minim minim;
 AudioInput in;
 FFT fft;
-
+AudioPlayer song;
+BeatDetect beat;
+float eRadius;
 
 void setup()
 {
@@ -31,12 +33,19 @@ void setup()
   minim = new Minim(this);
   
   // use the getLineIn method of the Minim object to get an AudioInput
-  in = minim.getLineIn();
+  in = minim.getLineIn();  
   
   println("BufferSize: " + in.bufferSize());
   println("SampleRate: " + in.sampleRate());
+
+  song = minim.loadFile("song.mp3", 2048);
+  song.play();  
   
   fft = new FFT(in.bufferSize(), in.sampleRate());
+  beat = new BeatDetect();
+  
+  ellipseMode(RADIUS);
+  eRadius = 20;
 }
 
 void draw() {
@@ -46,6 +55,14 @@ void draw() {
     background(#00E3FF);
  
     fft.forward(in.mix);
+    
+    beat.detect(in.mix);
+    float a = map(eRadius, 20, 80, 60, 255);
+    fill(60, 255, 0, a);
+    if ( beat.isOnset() ) eRadius = 80;
+    ellipse(250, 550, eRadius, eRadius);
+    eRadius *= 0.95;
+    if ( eRadius < 20 ) eRadius = 20;
  
   //line characteristics
     strokeWeight(1.3);
@@ -60,7 +77,7 @@ void draw() {
   //so that we can see the lines better
     for(int i = 0; i < 0+fft.specSize(); i++)
     {
-      line(i, height*4/5, i, height*4/5 - fft.getBand(i)*4);
+      line(i, 450, i, 450 - fft.getBand(i)*4);
     }
   
   //closing the transform tool
@@ -92,7 +109,8 @@ void draw() {
     text("left amplitude", 0, 50); 
     text("right amplitude", 0, 150); 
     text("mixed amplitude", 0, 250); 
-    text("frequency", 0, height*4/5); 
+    text("frequency", 0, 450);
+    text("beat detect", 0, 550); 
 
 }
 
