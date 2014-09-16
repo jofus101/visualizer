@@ -70,10 +70,9 @@ void setup()
   fft = new FFT(in.bufferSize(), in.sampleRate());
   beat_sound = new BeatDetect();
   beat_freq = new BeatDetect(in.bufferSize(), in.sampleRate());
+  beat_freq.setSensitivity(100); 
   kickSize = snareSize = hatSize = 16;
   listener = new BeatListener(beat_freq, in);
-  //textFont(createFont("Helvetica", 16));
-  textAlign(CENTER);
   
   ellipseMode(RADIUS);
   eRadius = 20;
