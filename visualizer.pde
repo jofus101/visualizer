@@ -22,9 +22,35 @@ import ddf.minim.analysis.*;
 Minim minim;
 AudioInput in;
 FFT fft;
-AudioPlayer song;
-BeatDetect beat;
+//AudioPlayer song;
+BeatDetect beat_freq;
+BeatDetect beat_sound;
+BeatListener listener;
 float eRadius;
+float kickSize, snareSize, hatSize;
+
+class BeatListener implements AudioListener
+{
+  private BeatDetect beat;
+  private AudioSource source;
+  
+  BeatListener(BeatDetect beat, AudioSource source)
+  {
+    this.source = source;
+    this.source.addListener(this);
+    this.beat = beat;
+  }
+  
+  void samples(float[] samps)
+  {
+    beat.detect(source.mix);
+  }
+  
+  void samples(float[] sampsL, float[] sampsR)
+  {
+    beat.detect(source.mix);
+  }
+}
 
 void setup()
 {
@@ -38,11 +64,16 @@ void setup()
   println("BufferSize: " + in.bufferSize());
   println("SampleRate: " + in.sampleRate());
 
-  song = minim.loadFile("song.mp3", 2048);
-  song.play();  
+  //song = minim.loadFile("song.mp3", 2048);
+  //song.play();  
   
   fft = new FFT(in.bufferSize(), in.sampleRate());
-  beat = new BeatDetect();
+  beat_sound = new BeatDetect();
+  beat_freq = new BeatDetect(in.bufferSize(), in.sampleRate());
+  kickSize = snareSize = hatSize = 16;
+  listener = new BeatListener(beat_freq, in);
+  //textFont(createFont("Helvetica", 16));
+  textAlign(CENTER);
   
   ellipseMode(RADIUS);
   eRadius = 20;
@@ -52,14 +83,14 @@ void draw() {
 
   //it's important to put the background in the draw loop
   //to make it animate rather than draw over itself 
-    background(#00E3FF);
+    background(#222222);
  
     fft.forward(in.mix);
     
-    beat.detect(in.mix);
+    beat_sound.detect(in.mix);
     float a = map(eRadius, 20, 80, 60, 255);
-    fill(60, 255, 0, a);
-    if ( beat.isOnset() ) eRadius = 80;
+    fill(0, 0, 0, a);
+    if ( beat_sound.isOnset() ) eRadius = 80;
     ellipse(250, 550, eRadius, eRadius);
     eRadius *= 0.95;
     if ( eRadius < 20 ) eRadius = 20;
@@ -112,6 +143,18 @@ void draw() {
     text("frequency", 0, 450);
     text("beat detect", 0, 550); 
 
+    if ( beat_freq.isKick() ) kickSize = 32;
+    if ( beat_freq.isSnare() ) snareSize = 32;
+    if ( beat_freq.isHat() ) hatSize = 32;
+    textSize(kickSize);
+    text("KICK", width/4, height/2);
+    textSize(snareSize);
+    text("SNARE", width/2, height/2);
+    textSize(hatSize);
+    text("HAT", 3*width/4, height/2);
+    kickSize = constrain(kickSize * 0.95, 16, 32);
+    snareSize = constrain(snareSize * 0.95, 16, 32);
+    hatSize = constrain(hatSize * 0.95, 16, 32);
 }
 
 void stop()
